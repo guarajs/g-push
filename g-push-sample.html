@@ -2,16 +2,22 @@
 
 <polymer-element name="g-push-sample">
     <template>
-        <g-push></g-push>
+        <link rel="stylesheet" href="../guara/guara.css">
+        <g-push id="service"></g-push>
+
         <dl class="dl-horizontal" style="margin: 30px 0px;">
             <dt>Status:</dt>
-			<dd>{{ }}</dd>
+			<dd>{{ status }}</dd>
 
 			<dt>Url:</dt>
 			<dd><input class="form-control" type="text" value="{{ url }}" /></dd>
 
 			<dt></dt>
 			<dd><button class="btn btn-primary" on-click="{{ doConnect }}">Connectar</button></dd>
+
+            <dt></dt>
+			<dd><button class="btn btn-primary" on-click="{{ doDisconnect }}">Diconnectar</button></dd>
+
 		</dl>
 
 
@@ -20,13 +26,9 @@
         Polymer({
             status: 'disconnected',
 
-            created: function() {
-                this.push = document.querySelector('g-push');
-            },
-
             doConnect: function() {
                 var $this = this;
-                this.push.connect(function(){
+                this.$.service.connect(function(){
                     console.log('Guara Push Connected');
                     $this.status = 'connected';
                 });
