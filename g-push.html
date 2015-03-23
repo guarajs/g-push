@@ -1,0 +1,57 @@
+<polymer-element name="g-push" attributes="">
+	<template>
+	<script>
+
+		(function(){
+
+			var _toString = function(message) {
+				try
+				{
+					return JSON.stringify(message);
+				}
+				catch(err)
+				{
+					console.error("Error converting json '" + message + "' to string");
+				}
+				return null;
+			};
+
+			var _toJson = function(s) {
+				try
+				{
+					return JSON.parse(s);
+				}
+				catch(err)
+				{
+					console.error("Error converting string '" + s + "' to json");
+				}
+				return null;
+			};
+
+
+			Polymer({
+				keepTryingToConnect: function(ttw /* time to wait */, whenConnected) {
+
+				},
+				
+				connect: function(whenConnected) {
+
+				},
+
+				disconnect: function(whenDisconnected) {
+
+				},
+
+				isConnected: function() {
+
+				},
+
+				send: function(data, whenDone) {
+
+				},
+
+
+	    	});
+		}());
+	</script>
+</polymer-element>
