@@ -1,5 +1,4 @@
 <polymer-element name="g-push" attributes="">
-	<template>
 	<script>
 
 		(function(){
@@ -33,9 +32,9 @@
 				keepTryingToConnect: function(ttw /* time to wait */, whenConnected) {
 
 				},
-				
-				connect: function(whenConnected) {
 
+				connect: function(whenConnected) {
+					whenConnected();
 				},
 
 				disconnect: function(whenDisconnected) {
