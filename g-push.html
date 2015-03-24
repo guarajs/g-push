@@ -1,7 +1,25 @@
 <polymer-element name="g-push" attributes="">
+	<script src="../jquery/dist/jquery.min.js"></script>
 	<script>
 
-		(function(){
+		(function($){
+
+			var _messageCounter = 1;
+			var _callbacks = [];
+			var _interval = null;
+			var _isConnected = false;
+
+			var _clearInterval = function() {
+				if(_interval)
+				{
+					clearInterval(_interval);
+				}
+			};
+
+			var _drain = function() {
+
+			};
+
 
 			var _toString = function(message) {
 				try
@@ -28,20 +46,72 @@
 			};
 
 
+			var LongPolling = {
+
+				addr: function(url, param)
+				{
+					return url + '/lp' + param;
+				},
+
+				open: function(url, callbacks) {
+
+					url = this.addr(url, '/con');
+
+					/*
+					 * Forcing the creation of a new closure so 'callbacks' is defined.
+					 *
+					 * http://benalman.com/news/2010/11/immediately-invoked-function-expression/
+					 */
+					var success = (function (cb) {
+				        return function(data, textStatus, xhr) {
+							if(!data.sessionId)
+							{
+								throw 'sessionId missing from: ' + JSON.stringify(data);
+							}
+
+							_isConnected = true;
+							_clearInterval();
+							cb.success(data);
+							_drain();
+
+						};
+				    }(callbacks));
+
+					var error = (function (cb) {
+						return function(data, textStatus, xhr) {
+							cb.error(data);
+						};
+					}(callbacks));
+
+
+					$.ajax({dataType: "json", url: url})
+						.done(success)
+						.fail(error);
+				}
+			};
+
 			Polymer({
+				isConnected: function() {
+					return false;
+				},
+
 				keepTryingToConnect: function(ttw /* time to wait */, whenConnected) {
 
 				},
 
-				connect: function(whenConnected) {
-					whenConnected();
+				open: function(url, whenConnected) {
+					if(this.isConnected())
+					{
+						console.info('[PushService] Already connected');
+					}
+					else
+					{
+						console.info('[PushService] New connection to:', url);
+						LongPolling.open(url, whenConnected);
+					}
 				},
 
-				disconnect: function(whenDisconnected) {
-
-				},
-
-				isConnected: function() {
+				close: function(whenDisconnected) {
 
 				},
 
@@ -51,6 +121,6 @@
 
 
 	    	});
-		}());
+		}($));
 	</script>
 </polymer-element>

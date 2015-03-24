@@ -4,7 +4,6 @@
     <template>
         <link rel="stylesheet" href="../guara/guara.css">
         <g-push id="service"></g-push>
-
         <dl class="dl-horizontal" style="margin: 30px 0px;">
             <dt>Status:</dt>
 			<dd>{{ status }}</dd>
@@ -17,20 +16,24 @@
 
             <dt></dt>
 			<dd><button class="btn btn-primary" on-click="{{ doDisconnect }}">Diconnectar</button></dd>
-
 		</dl>
-
-
     </template>
     <script>
         Polymer({
             status: 'disconnected',
+            url: 'http://localhost:8080',
 
             doConnect: function() {
                 var $this = this;
-                this.$.service.connect(function(){
-                    console.log('Guara Push Connected');
-                    $this.status = 'connected';
+                this.$.service.open(this.url, {
+                    success: function(data) {
+                        console.log('Guara Push Connected');
+                        $this.status = 'connected';
+                    },
+                    error: function(data) {
+                        console.log('Guara Push Not Connected');
+                        $this.status = 'error';
+                    },
                 });
             }
         });
