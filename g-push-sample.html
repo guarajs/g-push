@@ -8,32 +8,60 @@
             <dt>Status:</dt>
 			<dd>{{ status }}</dd>
 
+            <dt>Session:</dt>
+			<dd>{{ session }}</dd>
+
 			<dt>Url:</dt>
 			<dd><input class="form-control" type="text" value="{{ url }}" /></dd>
 
 			<dt></dt>
-			<dd><button class="btn btn-primary" on-click="{{ doConnect }}">Connectar</button></dd>
+			<dd><button class="btn btn-primary" on-click="{{ doConnect }}">Connect</button></dd>
 
             <dt></dt>
-			<dd><button class="btn btn-primary" on-click="{{ doDisconnect }}">Diconnectar</button></dd>
+			<dd><button class="btn btn-primary" on-click="{{ doDisconnect }}">Disconnect</button></dd>
+
+            <dt>Message:</dt>
+			<dd><input class="form-control" type="text" value="{{ message }}" /></dd>
+
+            <dt></dt>
+			<dd><button class="btn btn-primary" on-click="{{ doSend }}">Send</button></dd>
+
 		</dl>
     </template>
     <script>
         Polymer({
             status: 'disconnected',
-            url: 'http://localhost:8080',
+            session: null,
+            url: 'http://localhost:8081/api',
+            message: '{"number": 1, "string": "é nois!"}',
+
+            doDisconnect: function() {
+                this.$.service.close();
+            },
 
             doConnect: function() {
                 var $this = this;
                 this.$.service.open(this.url, {
-                    success: function(data) {
-                        console.log('Guara Push Connected');
+                    onSuccess: function(data) {
+                        $this.session = data.sessionId;
                         $this.status = 'connected';
                     },
-                    error: function(data) {
-                        console.log('Guara Push Not Connected');
+                    onError: function(data) {
+                        $this.session = null;
                         $this.status = 'error';
                     },
+                });
+            },
+
+            doSend: function() {
+                var data = this.message;
+                this.$.service.send(data, {
+                    onError: function(err) {
+                        console.error(err);
+                    },
+                    onReply: function(reply) {
+                        console.info(reply);
+                    }
                 });
             }
         });

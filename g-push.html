@@ -8,6 +8,7 @@
 			var _callbacks = [];
 			var _interval = null;
 			var _isConnected = false;
+			var _session = null;
 
 			var _clearInterval = function() {
 				if(_interval)
@@ -16,41 +17,15 @@
 				}
 			};
 
-			var _drain = function() {
-
-			};
-
-
-			var _toString = function(message) {
-				try
-				{
-					return JSON.stringify(message);
-				}
-				catch(err)
-				{
-					console.error("Error converting json '" + message + "' to string");
-				}
-				return null;
-			};
-
-			var _toJson = function(s) {
-				try
-				{
-					return JSON.parse(s);
-				}
-				catch(err)
-				{
-					console.error("Error converting string '" + s + "' to json");
-				}
-				return null;
-			};
-
-
 			var LongPolling = {
 
 				addr: function(url, param)
 				{
 					return url + '/lp' + param;
+				},
+
+				drain: function() {
+
 				},
 
 				open: function(url, callbacks) {
@@ -64,62 +39,116 @@
 					 */
 					var success = (function (cb) {
 				        return function(data, textStatus, xhr) {
-							if(!data.sessionId)
-							{
-								throw 'sessionId missing from: ' + JSON.stringify(data);
-							}
-
-							_isConnected = true;
-							_clearInterval();
-							cb.success(data);
-							_drain();
-
+							cb.onSuccess(data);
+							LongPolling.drain();
 						};
 				    }(callbacks));
 
 					var error = (function (cb) {
 						return function(data, textStatus, xhr) {
-							cb.error(data);
+							cb.onError(data);
 						};
 					}(callbacks));
-
 
 					$.ajax({dataType: "json", url: url})
 						.done(success)
 						.fail(error);
-				}
+				},
+
+				write: function(session /* session id */, id /* message id */, message) {
+					console.warn(session, id, message);
+				},
 			};
 
 			Polymer({
 				isConnected: function() {
-					return false;
+					return _isConnected;
 				},
 
 				keepTryingToConnect: function(ttw /* time to wait */, whenConnected) {
 
 				},
 
-				open: function(url, whenConnected) {
+				open: function(url, handler) {
 					if(this.isConnected())
 					{
 						console.info('[PushService] Already connected');
+						return;
 					}
-					else
-					{
-						console.info('[PushService] New connection to:', url);
-						LongPolling.open(url, whenConnected);
-					}
+
+					console.info('[PushService] New connection to:', url);
+					LongPolling.open(url, {
+						onSuccess: function(data) {
+							if(!data.sessionId)
+							{
+								throw 'sessionId missing from: ' + JSON.stringify(data);
+							}
+							_session = data.sessionId;
+							_isConnected = true;
+							_clearInterval();
+							handler.onSuccess(data);
+						},
+						onError: function(data) {
+							_session = null;
+							_isConnected = false;
+							handler.onError(data);
+						}
+					});
 				},
 
 				close: function(whenDisconnected) {
-
+					if(this.isConnected())
+					{
+						console.info('[PushService] Disconecting');
+					}
+					else
+					{
+						console.info('[PushService] Already Disconected');
+					}
 				},
 
-				send: function(data, whenDone) {
+				send: function(message, handlers) {
+					if(handlers && typeof handlers === "function")
+					{
+						handlers = {onReply: handlers};
+					}
 
+					if(!this.isConnected())
+					{
+						console.info('[PushService] Not Connected');
+						if(handlers && handlers.whenNotConnected)
+						{
+							handlers.whenNotConnected();
+						}
+						return;
+					}
+
+					if(typeof message === "string")
+					{
+						message = JSON.parse(message);
+					}
+
+					var id = _messageCounter++;
+					if(handlers)
+					{
+						_callbacks[id] = handlers;
+					}
+
+					message.signalId = id.toString();
+					var txt = JSON.stringify(message);
+
+					try
+					{
+						LongPolling.write(_session, id, txt);
+					}
+					catch(err)
+					{
+						if(handlers && handlers.onError)
+						{
+							handlers.onError(err);
+						}
+					}
 				},
-
-
 	    	});
 		}($));
 	</script>
