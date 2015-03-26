@@ -13,6 +13,7 @@
     "tests"
   ],
   "dependencies": {
-    "guara": "master"
+    "guara": "master",
+    "core-ajax": "Polymer/core-ajax#~0.5.0"
   }
 }
